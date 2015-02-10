@@ -8,7 +8,7 @@ import GraphInductive
 import Random
 import GUI
 import Function (both)
-import List ((\\))
+import List
 import Unsafe
 import Maybe
 
@@ -116,9 +116,9 @@ main_ = let
       	-- todo error or support lines x = 0 | y = 0
 	BPs1 = [[[-100,-90],[-70,110]],[[-70,110],[110,-100]],[[110,-100],[-100,-90]]] --triangle
 	--BPs = [[[-70,80],[-40,100]],[[-40,100],[70,80]],[[70,80],[0,0]],[[0,0],[70,-50]],[[70,-50],[-60,-80]],[[-60,-80],[-70,80]]] --escher
-	--BPs = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], --octagon
-	--	[[110,0],[70,-80]],[[70,-80],[0,-100]],[[0,-100],[-70,-80]],[[-70,-80],[-100,0]]]
-	BPs_ = [BPs1]
+	BPs2 = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], --octagon
+		[[110,0],[70,-80]],[[70,-80],[0,-100]],[[0,-100],[-70,-80]],[[-70,-80],[-100,0]]]
+	BPs_ = [BPs1,BPs2]
 	BPs = BPs_ !! head (rand (length BPs_) 1)
 
      	n = length BPs
@@ -148,27 +148,29 @@ main_ = let
 			    in insEdge (from,to,(tvs,invalid_))
 	       -- transversal edges are added within each corner
 	       g3 = foldl (\ g5 (_,from,(edge,_)) -> TE edge junctype (\ e -> TE_ e from) g5) g4 ins
-	      in trace (show junctype) (g3,(junctype,corner1) : corners)
+	      in (g3,(junctype,v,corner1) : corners)
 	-- make a figure graph from bar graph by arcs relinking in accordance with junctions
 	(Cg,corners1) = ufold JG (bargraph1,[]) bargraph
-	HE (g6,g7,e1,insl,outsl) (junctype,corner)
+	HE (g6,g7,e1,insl,outsl) (junctype,_,corner)
 	   | (junctype == 1 || junctype == 6) =
-	     (delNode ito g6,delNode ito g7,junc junctype e1,ins : insl,outs : outsl)
+	     trace (show junctype) (delNode ito g6,delNode ito g7,junc junctype e1,ins : insl,outs : outsl)
 	   | otherwise = let
 				h = hide junctype e1
-				[(ofrom,oto,_)] = filteredge h outs
+				--[(ofrom,oto,_)] = filteredge h outs
 				[(from,to,_)] = filteredge a ins
 				[(from1,to1,_)] = filteredge a outs
 				[(tfrom,tto,_)] = filteredge tvs (out Cg to)
-				f1 = delEdges [(ifrom,ito),(ofrom,oto),(tfrom,tto)]
+				f1 = delEdges [(ifrom,ito){-,(ofrom,oto)-},(tfrom,tto)]
 				-- remove edge with excess parts
 				f2 = delEdge (if (excess junctype h) then (from1,to1) else (from,to))
-	     	       	 in (f2 (f1 g6),f1 g7,h,ins : insl, outs : outsl)
+	     	       	 in trace (show junctype) (f2 (f1 g6),f1 g7,h,ins : insl, outs : outsl)
 	   where ins = concatMap (\ v1 -> inn Cg v1) corner
 	   	 outs = concatMap (\ v1 -> out Cg v1) corner
 	   	 [(ifrom,ito,_)] = filteredge e1 ins
 	-- remove invisible edges based on randomly picked b or c edge
-	(Cg3,Cg4,_,insl1,outsl1) = foldl HE (Cg,Cg,hiddenedge,[],[]) (reverse corners1) -- dirs of arcs and traverse should match
+	(Cg3,Cg4,_,insl1,outsl1) = foldl HE (Cg,Cg,hiddenedge,[],[])
+				 -- consistence is a must for HE to make it's work properly
+				 (sortBy (\ (_,v1,_) (_,v2,_) -> v1 < v2) corners1)
 	filterneigh compare l = filteredge a (head (filter (\ es -> any compare es) l))
 	fin to = E where [(_,_,(_,E))] = filterneigh (\ (from,_,_) -> from == to) outsl1
 	fout from = E where [(_,_,(_,E))] = filterneigh (\ (_,to,_) -> to == from) insl1

@@ -9,3 +9,5 @@ It's written in functional logic language Curry. A theory behind the generator c
 ###Requirements
 
 [PAKCS distribution](http://www.informatik.uni-kiel.de/~pakcs/download.html) and Tcl/Tk are needed. First one for constraint programming libs and the second for drawing
+
+![](http://dukzcry.cc/screencaps/proggies/impart.png)
