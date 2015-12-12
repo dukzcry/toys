@@ -56,7 +56,7 @@ pat [c,a,d,b] = True
 theorem1cond2 l | even (length (filter (\ x -> x == 2 || x == 5 || x == 6) l))
 	      = l
 
-TE e j
+te e j
 	     | (e == a || e == c) && (j == 1 || j == 6) = case e of
 	       a -> Just b
 	       c -> Just d
@@ -90,51 +90,51 @@ inverse e = case e of
 	c -> b
 	d -> a
 
--- generate random junction set that matches known pattern
+-- GENERATE RANDOM JUNCTION SET THAT MATCHES KNOWN PATTERN
 juncset n = let
        juncset_ jl =
 	   jl == gen_vars n & domain jl 1 6 & labeling [RandomValue seed] jl &
- 	   o_ == map (\ junctype -> \ E -> junc junctype E) jl & jc == foldl1 (flip (.)) o_ & pat (map jc [a,b,c,d])
+ 	   o_ == map (\ junctype -> \ x -> junc junctype x) jl & jc == foldl1 (flip (.)) o_ & pat (map jc [a,b,c,d])
            where jc,o_ free
        l = once juncset_
  in trace (show l) theorem1cond2 l
 
--- produce equations for Es lines from generating lines
-Es [[x1,y1],[x2,y2]] =
+-- PRODUCE EQUATIONS FOR ES LINES FROM GENERATING LINES
+es [[x1,y1],[x2,y2]] =
    let ab = [2,10]
-       A = y1 -. y2
-       B = x2 -. x1
-       C = x1*.y2 -. x2*.y1
-       eq C_ = \ x y -> A CLPR.*.x CLPR.+. B CLPR.*.y CLPR.+. C_ == 0
-       z1 = sqrt (A^.2 +. B^.2)
-       Cs d_ =
+       ap = y1 -. y2
+       bp = x2 -. x1
+       cp = x1*.y2 -. x2*.y1
+       eq cf = \ x y -> ap CLPR.*.x CLPR.+. bp CLPR.*.y CLPR.+. cf == 0
+       z1 = sqrt (ap^.2 +. bp^.2)
+       cs d_ =
    	   let z = d_ *. z1
-        in map (\ C_ -> eq C_) [C +. z, C -. z]
- in zipWith (\ edge Ei -> (edge,Ei)) [b,c,a,d] (concatMap Cs ab)
+        in map (\ x -> eq x) [cp +. z, cp -. z]
+ in zipWith (\ edge ei -> (edge,ei)) [b,c,a,d] (concatMap cs ab)
 
--- solve equation system to get coordinates of the corners
+-- SOLVE EQUATION SYSTEM TO GET COORDINATES OF THE CORNERS
 cross eq1 eq2 = both round (once (\ (x,y) -> (eq1 x y) & (eq2 x y)))
 
 main = runGUI "impart" main_
 main_ = let
       	-- todo error or support lines x = 0 or y = 0
-	BPs1 = [[[-100,-90],[-70,110]],[[-70,110],[110,-100]],[[110,-100],[-100,-90]]] --triangle
-	--BPs2 = [[[-70,80],[-40,100]],[[-40,100],[70,80]],[[70,80],[0,0]],[[0,0],[70,-50]],[[70,-50],[-60,-80]],[[-60,-80],[-70,80]]] --escher
-	BPs3 = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], --octagon
+	bps1 = [[[-100,-90],[-70,110]],[[-70,110],[110,-100]],[[110,-100],[-100,-90]]] -- triangle
+	--bps2 = [[[-70,80],[-40,100]],[[-40,100],[70,80]],[[70,80],[0,0]],[[0,0],[70,-50]],[[70,-50],[-60,-80]],[[-60,-80],[-70,80]]] -- escher
+	bps3 = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], -- octagon
 		[[110,0],[70,-80]],[[70,-80],[0,-100]],[[0,-100],[-70,-80]],[[-70,-80],[-100,0]]]
-	BPs_ = [BPs1,BPs3]
-	BPs = BPs_ !! rand (length BPs_)
+	bps_ = [bps1,bps3]
+	bps = bps_ !! rand (length bps_)
 
-     	n = length BPs
+     	n = length bps
 	ns = [1..n]
 	ns1 = concatMap (\ n_ -> take 4 (repeat n_)) ns
-	edges_ = [if i == n then (n,1,j) else (i,i+1,j) | (i,j) <- zip ns1 (concatMap Es BPs)]
+	edges_ = [if i == n then (n,1,j) else (i,i+1,j) | (i,j) <- zip ns1 (concatMap es bps)]
 	js = juncset n
-	-- make a closed bar graph, all Es are linked to the same nodes, nodes hold junctions
+	-- MAKE A CLOSED BAR GRAPH, ALL ES ARE LINKED TO THE SAME NODES, NODES HOLD JUNCTIONS
      	bargraph = mkGraph (zipWith (\ n_ j -> (n_,Left j)) ns js) edges_
 	filteredge e = filter (\ (_,_,(edge,_)) -> edge == e)
 	filtertvs = filter (\ (_,_,(edge,_)) -> edge /= tvs)
-        JG (_,v,Left junctype,_) g =
+        jg (_,v,Left junctype,_) g =
 	   let il = inn g v
 	       ol = out g v
                knot (g1,corner) (ifrom,_,iEi@(iedge,_)) = let
@@ -147,38 +147,37 @@ main_ = let
 	       (g2,corner1) = foldl knot (g,[]) il
 	       g4 = delNode v g2 -- leaf arcs are removed automatically
 	       ins = concatMap (\ v1 -> inn g4 v1) corner1
-               TE_ edge from x = let
+               te_ edge from x = let
 	       		     [(_,to,(_,invalid))] = filteredge edge ins
                 in insEdge (from,to,(tvs,invalid)) x
 	       apply v1 f o = case v1 of
 	       	     Just v2 -> f v2 o
 		     Nothing -> o
-	       g3 = foldl (\ g5 (_,from,(edge,_)) -> apply (TE {-(inverse edge)-} edge junctype) (\ e x -> TE_ {-(inverse e)-} e from x) g5) g4 ins -- transversal edges are added within each corner
+	       g3 = foldl (\ g5 (_,from,(edge,_)) -> apply (te {-(inverse edge)-} edge junctype) (\ e x -> te_ {-(inverse e)-} e from x) g5) g4 ins -- transversal edges are added within each corner
          in g3
-	-- make a figure graph from bar graph by arcs relinking in accordance with junctions
-	Cg = ufold JG bargraph bargraph
+	-- MAKE A FIGURE GRAPH FROM BAR GRAPH BY ARCS RELINKING IN ACCORDANCE WITH JUNCTIONS
+	cg = ufold jg bargraph bargraph
 	corners = let
-		oldnewv = map (\ (v,Right (Just oldv)) -> (oldv,v)) (labNodes Cg)
+		oldnewv = map (\ (v,Right (Just oldv)) -> (oldv,v)) (labNodes cg)
 		matchv x = filter (\ (oldv,_) -> oldv == x) oldnewv
 	 in zipWith (\ j x -> (j,map (\ (_,newv) -> newv) (matchv x))) js
 	 ns -- consistence is a must for HE to make it's work properly
-	HE (g6,e1) (junctype,corner)
+	he (g6,e1) (junctype,corner)
 	   | junctype == 1 || junctype == 6 =
 	     (delNode ito g6,junc junctype e1)
 	   | otherwise =
 	     (delEdge (ifrom,ito) g6,hide junctype e1)
-	   where ins = concatMap (\ v1 -> inn Cg v1) corner
+	   where ins = concatMap (\ v1 -> inn cg v1) corner
 	   	 [(ifrom,ito,_)] = filteredge e1 ins
-	-- remove invisible edges based on randomly picked b or c edge
-	(Cg4,_) = foldl HE (Cg,hiddenedge) corners
-        FO (_,v,Right (Just l),_) g = let
-	    getedge oldv dirf e = head (filteredge e (dirf bargraph oldv))
-	    getlab (_,_,l1) = l1
+	-- REMOVE INVISIBLE EDGES BASED ON RANDOMLY PICKED B OR C EDGE
+	(cg4,_) = foldl he (cg,hiddenedge) corners
+        fo (_,v,Right (Just l),_) g = let
+	    getedge oldv dirf e = filteredge e (dirf bargraph oldv)
             fixnode todir =
 	    	    let
 			[n1] = newNodes 1 g
 			f1 x = insNode (n1,Right (Nothing)) x
-			l1 = getlab (getedge l (if todir then inn else out) {-d-} a) -- copy a or d edge and link orphan node to it
+			[(_,_,l1)] = getedge l (if todir then inn else out) {-(inverse a)-} a -- copy border edge and link orphan node to it
 			f2 x = insEdge (if todir then (n1,v,l1) else (v,n1,l1)) x
              in f2 (f1 g)
 	    matchnodes p g1 = case p of
@@ -187,25 +186,25 @@ main_ = let
 	    	_ -> g1
 	    f3 x = matchnodes (filtertvs (inn g v),filtertvs (out g v)) x
          in f3 g
-	-- link orphan edges
-	Cg3 = ufold FO Cg4 Cg4
-        CP (s,v,_,p) = let
-	    il = filtertvs (inn Cg3 v)
-	    ol = filtertvs (out Cg3 v)
-	    makecross [(_,_,(_,E1))] [(_,_,(_,E2))] = cross E1 E2
+	-- LINK ORPHAN EDGES
+	cg3 = ufold fo cg4 cg4
+        cp (s,v,_,p) = let
+	    il = filtertvs (inn cg3 v)
+	    ol = filtertvs (out cg3 v)
+	    makecross [(_,_,(_,e1))] [(_,_,(_,e2))] = cross e1 e2
 	    l2 = if il == [] || ol == [] then Nothing else Just (makecross il ol)
          in (s,v,l2,p)
-	-- calc cross points
-	Cg1 = gmap CP Cg3
-	Cg5 = foldl (\ g (v,l) -> if isNothing l then delNode v g else g) Cg1 (labNodes Cg1)
-	Es1 node cross1_ = case node of
-      	    [(_,v1)] -> [((cross1_,cross2),v1)] where cross2 = fromJust (lab Cg5 v1)
-	    [(_,v1),(_,v2)] -> [((cross1_,cross12),v1),((cross1_,cross22),v2)] where (cross12,cross22) = (fromJust (lab Cg5 v1),fromJust (lab Cg5 v2))
+	-- CALCULATE CROSS POINTS
+	cg1 = gmap cp cg3
+	cg5 = foldl (\ g (v,l) -> if isNothing l then delNode v g else g) cg1 (labNodes cg1)
+	es1 node cross1_ = case node of
+      	    [(_,v1)] -> [((cross1_,cross2),v1)] where cross2 = fromJust (lab cg5 v1)
+	    [(_,v1),(_,v2)] -> [((cross1_,cross12),v1),((cross1_,cross22),v2)] where (cross12,cross22) = (fromJust (lab cg5 v1),fromJust (lab cg5 v2))
       	    [] -> []
 	    x -> error (show x)
-	-- assign Es segments to arcs
-	Cg2 = gmap (\ (p,v,l,s) -> (Es1 p l,v,l,Es1 s l)) Cg5
-	prepare = map (\ (_,_,(Just p1,Just p2)) -> [both (+200) p1,both (+200) p2]) (labEdges Cg2)
+	-- ASSIGN ES SEGMENTS TO ARCS
+	cg2 = gmap (\ (p,v,l,s) -> (es1 p l,v,l,es1 s l)) cg5
+	prepare = map (\ (_,_,(Just p1,Just p2)) -> [both (+200) p1,both (+200) p2]) (labEdges cg2)
 	draw gport = mapIO_ (\ l -> addCanvas cref [CLine l ""] gport) prepare
  in Col [] [Canvas [WRef cref, Height 400, Width 400],
        	      Button draw [Text "draw"]]

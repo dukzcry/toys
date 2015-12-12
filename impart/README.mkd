@@ -1,6 +1,6 @@
 ###Wha?
 
-This is an impossible figures generator. I didn't find one on internet (2014) so decided to make own
+This is an impossible figure generator. I didn't find one on internet (2014) so decided to make own
 
 ###Details
 
