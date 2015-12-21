@@ -124,9 +124,9 @@ main_ = let
       	-- FIGURE CONTOURS UPON WHICH IMPOSSIBLE FIGURES ARE BUILT
       	-- todo support lines x = 0 or y = 0
 	bps1 = [[[-100,-90],[-70,110]],[[-70,110],[110,-100]],[[110,-100],[-100,-90]]] -- triangle
-	bps3 = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], -- octagon
+	bps2 = [[[-100,0],[-70,80]],[[-70,80],[0,110]],[[0,110],[70,80]],[[70,80],[110,0]], -- octagon
 	       [[110,0],[70,-80]],[[70,-80],[0,-100]],[[0,-100],[-70,-80]],[[-70,-80],[-100,0]]]
-	bps2 = [[[-70,80],[-40,100]],[[-40,100],[70,80]],[[70,80],[0,0]],[[0,0],[70,-50]],[[70,-50],[-60,-80]],[[-60,-80],[-70,80]]] -- waterfall
+	bps3 = [[[-70,80],[-40,100]],[[-40,100],[70,80]],[[70,80],[0,0]],[[0,0],[70,-50]],[[70,-50],[-60,-80]],[[-60,-80],[-70,80]]] -- waterfall
 	bps4 = [[[-100,-90],[-90,110]],[[-90,110],[100,-100]],[[100,-100],[110,110]],[[110,110],[-100,-90]]] -- crossed rectangle
 	bps5 = [[[-70,-80],[0,110]],[[0,110],[70,-80]],[[70,-80],[-100,40]],[[-100,40],[100,30]],[[100,30],[-70,-80]]] -- crossed star
 	bps6 = [[[-100,-100],[100,100]],[[100,100],[-100,0]],[[-100,0],[100,-100]],[[100,-100],[-100,100]],[[-100,100],[100,0]],[[100,0],[-100,-100]]] -- crossed double star
@@ -148,12 +148,12 @@ main_ = let
 	       (_,_,(_,_,line1)) = filteredge a il
 	       (_,_,(_,_,line2)) = filteredge a ol
 	       orient = clockwise line1 line2
-               knot (g1,corner) (ifrom,_,iEi@(iedge,_,_)) = let
+               knot (g1,corner) (ifrom,_,iei@(iedge,_,_)) = let
 	       	      oedge = junc junctype iedge
 		      [n2] = newNodes 1 g1
-	       	      (_,oto,oEi) = filteredge oedge ol
+	       	      (_,oto,oei) = filteredge oedge ol
 		      f1 x = insNode (n2,Right (Just (v,orient))) x
-		      f2 x = insEdges [(ifrom,n2,iEi),(n2,oto,oEi)] x
+		      f2 x = insEdges [(ifrom,n2,iei),(n2,oto,oei)] x
 	        in (f2 (f1 g1),n2 : corner)
 	       (g2,corner1) = foldl knot (g,[]) il
 		-- leaf arcs are removed automatically
@@ -223,7 +223,7 @@ main_ = let
 	draworder = let
 		  oldnewv = map (\ (v,Just (oldv,_)) -> (oldv,v)) (labNodes cg2)
 		  randset = once (\ rl -> rl == gen_vars n & domain rl 1 n & allDifferent rl & labeling [RandomVariable seed] rl)
-		  prepare (_,_,(e,Just (_,p1),Just (_,p2))) = (e,[both (+200) p1,both (+200) p2])
+		  prepare (_,_,(e,Just (_,(x1,y1)),Just (_,(x2,y2)))) = (e,[(x1+200,200-y1),(x2+200,200-y2)])
 	 in map (\ x -> concatMap (\ (_,newv) -> map prepare (out cg2 newv)) (matchv x oldnewv)) randset
 	-- CROSSED BARS PART 2
 	erase gport list = let
