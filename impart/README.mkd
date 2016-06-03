@@ -4,10 +4,10 @@ This is an impossible figure generator. I didn't find one on internet (2014) so 
 
 ###Details
 
-Its written in functional logic language Curry. A theory behind the generator can be found in [K. Tarui papers](https://www.jstage.jst.go.jp/result?item1=8&word1=KENTO+TARUI)
+Its written in functional logic language Curry. The rules behind generator can be found in [K. Tarui papers](https://www.jstage.jst.go.jp/result?item1=8&word1=KENTO+TARUI)
 
 ###Requirements
 
 [PAKCS distribution](http://www.informatik.uni-kiel.de/~pakcs/download.html) and Tcl/Tk are needed. First one for constraint programming libs and the second for drawing
 
-![](http://dukzcry.cc/screencaps/proggies/impart.png)
+![](https://cloud.githubusercontent.com/assets/333093/15784744/89da50f0-29bc-11e6-899a-d770d124e40a.png)
