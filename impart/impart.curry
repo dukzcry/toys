@@ -93,8 +93,8 @@ inverse e = case e of
 -- GENERATE RANDOM JUNCTION SET THAT MATCHES KNOWN PATTERN
 juncset n = let
        juncset_ jl =
-           jl == gen_vars n & domain jl 1 6 & True & labeling [RandomValue seed] jl &
-           o_ == map (\ junctype -> \ x -> junc junctype x) jl & jc == foldl1 (flip (.)) o_ & pat (map jc [a,b,c,d])
+           jl == gen_vars n & domain jl 1 6 & True & labeling [RandomValue seed] jl &&
+           o_ == map (\ junctype -> \ x -> junc junctype x) jl && jc == foldr1 (.) o_ && pat (map jc [a,b,c,d])
            where jc,o_ free
        l = once juncset_
  in trace (show l) theorem1cond2 l
@@ -113,7 +113,7 @@ es v@[[x1,y1],[x2,y2]] | x2 -. x1 /= 0 && y2 -. y1 /= 0 =
  in zipWith (\ edge ei -> (edge,ei,v)) [b,c,a,d] (concatMap cs ab)
 
 -- SOLVE EQUATION SYSTEM TO GET COORDINATES OF CORNERS
-cross eq1 eq2 = both round (once (\ (x,y) -> (eq1 x y) & (eq2 x y)))
+cross eq1 eq2 = both round (once (\ (x,y) -> (eq1 x y) && (eq2 x y)))
 
 -- DETERMINE CORNER DIRECTION
 clockwise [[x1,y1],[x2,y2]] [_,[x3,y3]] =
@@ -135,7 +135,7 @@ main_ = let
 
         n = length bps
         ns = [1..n]
-        ns1 = concatMap (\ n_ -> take 4 (repeat n_)) ns
+        ns1 = concatMap (\ n_ -> replicate 4 n_) ns
         edges_ = [if i == n then (n,1,j) else (i,i+1,j) | (i,j) <- zip ns1 (concatMap es bps)]
         js = juncset n
         -- MAKE A CLOSED BAR GRAPH, ALL ES ARE LINKED TO THE SAME NODES, NODES HOLD JUNCTIONS
@@ -148,14 +148,14 @@ main_ = let
                (_,_,(_,_,line1)) = filteredge a il
                (_,_,(_,_,line2)) = filteredge a ol
                orient = clockwise line1 line2
-               knot (g1,corner) (ifrom,_,iei@(iedge,_,_)) = let
+               knot (ifrom,_,iei@(iedge,_,_)) (g1,corner) = let
                       oedge = junc junctype iedge
                       [n2] = newNodes 1 g1
                       (_,oto,oei) = filteredge oedge ol
                       f1 x = insNode (n2,Right (Just (v,orient))) x
                       f2 x = insEdges [(ifrom,n2,iei),(n2,oto,oei)] x
                 in (f2 (f1 g1),n2 : corner)
-               (g2,corner1) = foldl knot (g,[]) il
+               (g2,corner1) = foldr knot (g,[]) il
                 -- leaf arcs are removed automatically
                g4 = delNode v g2
                ins = concatMap (\ v1 -> inn g4 v1) corner1
@@ -166,7 +166,7 @@ main_ = let
                      Just v2 -> f v2 o
                      Nothing -> o
                 -- transversal edges are added within each corner
-               g3 = foldl (\ g5 (_,from,(edge,_,_)) ->
+               g3 = foldr (\ (_,from,(edge,_,_)) g5 ->
                   apply (te (if orient then edge else inverse edge) junctype)
                   (\ e x -> te_ (if orient then e else inverse e) from x) g5) g4 ins
          in g3
@@ -176,15 +176,15 @@ main_ = let
         corners = let
                 oldnewv = map (\ (v,Right (Just (oldv,_))) -> (oldv,v)) (labNodes cg)
          in zipWith (\ j x -> (j,map (\ (_,newv) -> newv) (matchv x oldnewv))) js ns
-        he (g6,e1) (junctype,corner)
+        he (junctype,corner) (g6,e1)
            | junctype == 1 || junctype == 6 =
-             (delNode ito g6,junc junctype e1)
+             (delNode ofrom g6,junc junctype e1)
            | otherwise =
-             (delEdge (ifrom,ito) g6,hide junctype e1)
-           where ins = concatMap (\ v1 -> inn cg v1) corner
-                 (ifrom,ito,_) = filteredge e1 ins
+             (delEdge (ofrom,oto) g6,hide junctype e1)
+           where ins = concatMap (\ v1 -> out cg v1) corner
+                 (ofrom,oto,_) = filteredge e1 ins
         -- REMOVE INVISIBLE EDGES BASED ON RANDOMLY PICKED B OR C EDGE
-        (cg4,_) = foldl he (cg,hiddenedge) corners
+        (cg4,_) = foldr he (cg,hiddenedge) corners
         fo (_,v,Right (Just (l,orient)),_) g = let
             getedge oldv dirf e = filteredge e (dirf bargraph oldv)
             fixnode todir =
@@ -211,7 +211,7 @@ main_ = let
          in (s,v,l2,p)
         -- CALCULATE CROSS POINTS
         cg1 = gmap cp cg3
-        cg5 = foldl (\ g (v,l) -> if isNothing l then delNode v g else g) cg1 (labNodes cg1)
+        cg5 = foldr (\ (v,l) g -> if isNothing l then delNode v g else g) cg1 (labNodes cg1)
         es1 node cross1_ = case node of
             [((e,_,_),v1)] -> [((e,cross1_,cross2),v1)] where cross2 = fromJust (lab cg5 v1)
             [((e1,_,_),v1),((e2,_,_),v2)] -> [((e1,cross1_,cross12),v1),((e2,cross1_,cross22),v2)] where (cross12,cross22) = (fromJust (lab cg5 v1),fromJust (lab cg5 v2))
@@ -233,9 +233,9 @@ main_ = let
               [ba,ea] = fixdir (filteredge2 a list)
               [bm,em] = fixdir (filteredge2 (b ? c) list)
               [bd,ed] = fixdir (filteredge2 d list)
-         -- todo better erasing parameters
+         -- todo better erasing parameters, currently needs antialiasing like on osx
          in addCanvas cref [CPolygon [ba,bm,bd,ed,em,ea] "-fill white -width 0"] gport
-        line gport list = mapIO_ (\ (_,l) -> addCanvas cref [CLine l "-width 2"] gport) list
+        line gport list = mapIO_ (\ (_,l) -> addCanvas cref [CLine l "-width 1"] gport) list
         draw gport = mapIO_ (\ list -> do erase gport list
                                           line gport list) draworder
  in Col [] [Canvas [WRef cref, Height 400, Width 400, Background "white"],
