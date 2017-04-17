@@ -1,12 +1,12 @@
-###Wha?
+### Wha?
 
 This is an impossible figure generator. I didn't find one on internet (2014) so decided to make own
 
-###Details
+### Details
 
 Its written in functional logic language Curry. The rules behind generator can be found in [K. Tarui papers](https://www.jstage.jst.go.jp/result?item1=8&word1=KENTO+TARUI)
 
-###Requirements
+### Requirements
 
 [PAKCS distribution](http://www.informatik.uni-kiel.de/~pakcs/download.html) and Tcl/Tk are needed. First one for constraint programming libs and the second for drawing
 
