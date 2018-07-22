@@ -111,7 +111,7 @@ es v@[[x1,y1],[x2,y2]] | x2 -. x1 /= 0 && y2 -. y1 /= 0 =
        ap = y1 -. y2
        bp = x2 -. x1
        cp = x1*.y2 -. x2*.y1
-       eq cf = \ x y -> ap CLPR.*.x CLPR.+. bp CLPR.*.y CLPR.+. cf == 0
+       eq cf = \ x y -> ap CLPR.*.x CLPR.+. bp CLPR.*.y CLPR.+. cf =:= 0
        z1 = sqrt (ap^.2 +. bp^.2)
        cs d_ =
            let z = d_ *. z1
