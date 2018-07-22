@@ -213,6 +213,7 @@ main_ = let
             il = filtertvs (inn cg3 v)
             ol = filtertvs (out cg3 v)
             makecross [(_,_,(_,e1,_))] [(_,_,(_,e2,_))] = cross e1 e2
+            -- il == [] || ol == []
             isempty l_ = case l_ of
               [] -> True
               _ -> False
