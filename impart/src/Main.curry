@@ -1,4 +1,10 @@
--- Written by A. V. Lukyanov <lomka@gero.in>
+------------------------------------------------------------------------------
+--- Impossible figure generator
+---
+--- @author Artem Lukyanov
+--- @version Jule 2018
+--- @category general
+------------------------------------------------------------------------------
 
 import CLPFD
 import qualified CLPR
