@@ -20,7 +20,7 @@ import Unsafe
 import Maybe
 import Either
 
-data edge_ = a | b | c | d | tvs
+data edge_ = a | b | c | d | tvs deriving (Eq,Show,Enum)
 
 -- rule-o-rama
 junc 1 e = case e of
@@ -100,7 +100,7 @@ inverse e = case e of
 juncset n = let
        juncset_ jl =
            jl == gen_vars n & domain jl 1 6 & True & labeling [RandomValue seed] jl &&
-           o_ == map (\ junctype -> \ x -> junc junctype x) jl && jc == foldr1 (.) o_ && pat (map jc [a,b,c,d])
+           o_ =:= map (\ junctype -> \ x -> junc junctype x) jl && jc =:= foldr1 (.) o_ && pat (map jc [a .. d])
            where jc,o_ free
        l = once juncset_
  in trace (show l) theorem1cond2 l
@@ -213,7 +213,10 @@ main_ = let
             il = filtertvs (inn cg3 v)
             ol = filtertvs (out cg3 v)
             makecross [(_,_,(_,e1,_))] [(_,_,(_,e2,_))] = cross e1 e2
-            l2 = if il == [] || ol == [] then Nothing else Just (fst (fromJust l),makecross il ol)
+            isempty l_ = case l_ of
+              [] -> True
+              _ -> False
+            l2 = if isempty il || isempty ol then Nothing else Just (fst (fromJust l),makecross il ol)
          in (s,v,l2,p)
         -- CALCULATE CROSS POINTS
         cg1 = gmap cp cg3
@@ -222,7 +225,7 @@ main_ = let
             [((e,_,_),v1)] -> [((e,cross1_,cross2),v1)] where cross2 = fromJust (lab cg5 v1)
             [((e1,_,_),v1),((e2,_,_),v2)] -> [((e1,cross1_,cross12),v1),((e2,cross1_,cross22),v2)] where (cross12,cross22) = (fromJust (lab cg5 v1),fromJust (lab cg5 v2))
             [] -> []
-            x -> error (show x)
+            --x -> error (show x)
         -- ASSIGN ES SEGMENTS TO ARCS
         cg2 = gmap (\ (p,v,l,s) -> (es1 p l,v,l,es1 s l)) cg5
         -- CROSSED BARS PART 1
