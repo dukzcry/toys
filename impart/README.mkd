@@ -11,4 +11,4 @@ Its written in functional logic language Curry. The rules behind generator can b
 1. Install [PAKCS](http://www.informatik.uni-kiel.de/~pakcs/download.html)
 2. cypm curry :load Main :eval main :quit
 
-![](https://cloud.githubusercontent.com/assets/333093/15784744/89da50f0-29bc-11e6-899a-d770d124e40a.png)
+![](89da50f0-29bc-11e6-899a-d770d124e40a.png)
