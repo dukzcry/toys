@@ -4,11 +4,9 @@
   "author": "Artem Lukyanov <lomka@gero.in>",
   "synopsis": "impossible figure generator",
   "category": [ "Programming" ],
-  "license": "BSD-3-Clause",
-  "licenseFile": "LICENSE",
   "dependencies": {
-    "clp-pakcs": ">= 1.0.0, < 2.0.0",
-    "graph-inductive": ">= 2.0.0, < 3.0.0",
-    "gui": ">= 2.0.0, < 3.0.0"
+    "clp-pakcs": ">= 1.0.0",
+    "graph-inductive": ">= 2.0.0",
+    "gui": ">= 2.0.0"
   }
 }
