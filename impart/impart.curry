@@ -95,10 +95,7 @@ inverse edge = case edge of
 
 data EsSegment = EsSegmentR { vSegF :: Int, dotF :: [Int] } | EsSegmentEmpty deriving (Show,Eq)
 data GraphArc = GraphArcR { edgeF :: Edge, esLinesF :: Float -> Float -> Bool, genLineF :: [[Float]] }
-                 | GraphArc2R {
-                    edgeF :: Edge,
-                    esSegment1F :: EsSegment,
-                    esSegment2F :: EsSegment }
+                | GraphArc2R { edgeF :: Edge, esSegment1F :: EsSegment, esSegment2F :: EsSegment }
 data GraphNode = GraphNode Int | GraphNodeR { vNodeF :: Int, orientF :: Bool } | GraphNodeEmpty deriving Show
 data OldNewV = OldNewVR { oldVF :: Int, newVF :: Int }
 matchv x l = filter (\ oldNewVR -> oldVF oldNewVR == x) l
@@ -135,8 +132,8 @@ linesCross lineEquation1 lineEquation2 = map round (getSolution (\ [x,y] -> (lin
 -- DETERMINE CORNER DIRECTION
 clockwise [[x1,y1],[x2,y2]] [_,[x3,y3]] = (x2 -. x1)*.(y3 -. y1) -. (y2 -. y1)*.(x3 -. x1) < 0
 
-main = runGUI "impart" main_
-main_ = let
+main = runGUI "impart" main'
+main' = let
         -- FIGURE CONTOURS UPON WHICH IMPOSSIBLE FIGURES ARE BUILT
         -- todo support lines x = 0 or y = 0
         bps1 = [[[-100,-90],[-70,110]],[[-70,110],[110,-100]],[[110,-100],[-100,-90]]] -- triangle
@@ -146,16 +143,16 @@ main_ = let
         bps4 = [[[-100,-90],[-90,110]],[[-90,110],[100,-100]],[[100,-100],[110,110]],[[110,110],[-100,-90]]] -- crossed rectangle
         bps5 = [[[-70,-80],[0,110]],[[0,110],[70,-80]],[[70,-80],[-100,40]],[[-100,40],[100,30]],[[100,30],[-70,-80]]] -- crossed star
         bps6 = [[[-100,-100],[100,100]],[[100,100],[-100,0]],[[-100,0],[100,-100]],[[100,-100],[-100,100]],[[-100,100],[100,0]],[[100,0],[-100,-100]]] -- crossed double star
-        bps_ = [bps1,bps2,bps3,bps4,bps5,bps6]
-        bps = bps_ !! random (length bps_)
+        bps' = [bps1,bps2,bps3,bps4,bps5,bps6]
+        bps = bps' !! random (length bps')
 
         n = length bps
         ns = [1..n]
-        ns1 = concatMap (\ n_ -> replicate 4 n_) ns
-        edges_ = [if i == n then (n,1,j) else (i,i+1,j) | (i,j) <- zip ns1 (concatMap graphArcs bps)]
+        ns1 = concatMap (\ n' -> replicate 4 n') ns
+        edges' = [if i == n then (n,1,j) else (i,i+1,j) | (i,j) <- zip ns1 (concatMap graphArcs bps)]
         js = juncSet n
         -- MAKE A CLOSED BAR GRAPH, ALL ES ARE LINKED TO THE SAME NODES, NODES HOLD JUNCTIONS
-        bargraph = mkGraph (zipWith (\ n_ j -> (n_,GraphNode j)) ns js) edges_
+        bargraph = mkGraph (zipWith (\ n' j -> (n',GraphNode j)) ns js) edges'
         filteredge e x = head (filter (\ (_,_,graphArc) -> edgeF graphArc == e) x)
         filtertvs x = filter (\ (_,_,graphArc) -> edgeF graphArc /= Transverse) x
         jg (_,v,GraphNode junc,_) g =
@@ -175,12 +172,12 @@ main_ = let
                 -- leaf arcs are removed automatically
                g4 = delNode v g2
                ins = concatMap (\ v1 -> inn g4 v1) corner1
-               te_ edge from x = let
+               te' edge from x = let
                              (_,to,graphArc) = filteredge edge ins
                 in insEdge (from,to,graphArc { edgeF = Transverse }) x
                 -- transversal edges are added within each corner
                g3 = foldr (\ (_,from,GraphArcR {edgeF = edge}) g5 ->
-                  maybe g5 (\ e -> te_ (if orient then e else inverse e) from g5)
+                  maybe g5 (\ e -> te' (if orient then e else inverse e) from g5)
                   (transverseRule (if orient then edge else inverse edge) junc)) g4 ins
          in g3
         -- MAKE A FIGURE GRAPH FROM BAR GRAPH BY ARCS RELINKING IN ACCORDANCE WITH JUNCTIONS
@@ -219,19 +216,15 @@ main_ = let
             il = filtertvs (inn cg3 v)
             ol = filtertvs (out cg3 v)
             makecross [(_,_,GraphArcR {esLinesF = e1})] [(_,_,GraphArcR {esLinesF = e2})] = linesCross e1 e2
-            -- il == [] || ol == []
-            isempty l_ = case l_ of
-              [] -> True
-              _ -> False
-            l2 = if isempty il || isempty ol then EsSegmentEmpty else EsSegmentR { vSegF = vNodeF l, dotF = makecross il ol }
+            l2 = if null il || null ol then EsSegmentEmpty else EsSegmentR { vSegF = vNodeF l, dotF = makecross il ol }
          in (s,v,l2,p)
         -- CALCULATE CROSS POINTS
         cg1 = gmap cp cg3
         cg5 = foldr (\ (v,l) g -> if l == EsSegmentEmpty then delNode v g else g) cg1 (labNodes cg1)
-        es1 node cross1_ = case node of
-            [(GraphArcR {edgeF = e},v1)] -> [(GraphArc2R {edgeF = e,esSegment1F = cross1_,esSegment2F = cross2},v1)] where cross2 = fromJust (lab cg5 v1)
+        es1 node cross1' = case node of
+            [(GraphArcR {edgeF = e},v1)] -> [(GraphArc2R {edgeF = e,esSegment1F = cross1',esSegment2F = cross2},v1)] where cross2 = fromJust (lab cg5 v1)
             [(GraphArcR {edgeF = e1},v1),(GraphArcR {edgeF = e2},v2)] ->
-              [(GraphArc2R {edgeF = e1,esSegment1F = cross1_,esSegment2F = cross12},v1),(GraphArc2R {edgeF = e2,esSegment1F = cross1_,esSegment2F = cross22},v2)]
+              [(GraphArc2R {edgeF = e1,esSegment1F = cross1',esSegment2F = cross12},v1),(GraphArc2R {edgeF = e2,esSegment1F = cross1',esSegment2F = cross22},v2)]
               where (cross12,cross22) = (fromJust (lab cg5 v1),fromJust (lab cg5 v2))
             [] -> []
             --x -> error (show x)
