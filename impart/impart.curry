@@ -10,9 +10,9 @@ import CLPFD
 import qualified CLPR
 import Float
 import Integer
-import AllSolutions
-import GraphInductive
-import Random
+import Control.AllSolutions
+import Data.GraphInductive
+import System.Random
 import GUI
 import Function
 import List

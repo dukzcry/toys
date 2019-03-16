@@ -1,7 +1,7 @@
 {
   "name": "impart",
   "version": "0.0.1",
-  "author": "Artem Lukyanov <lomka@gero.in>",
+  "author": "Artem Lukyanov <dukzcry@ya.ru>",
   "synopsis": "impossible figure generator",
   "category": [ "Programming" ],
   "dependencies": {
